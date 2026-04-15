@@ -1,0 +1,49 @@
+name: Daily GitHub AI Push
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  push-report:
+    runs-on: ubuntu-latest
+    env:
+      TIMEZONE: Asia/Shanghai
+      MAX_RECOMMENDATIONS: "10"
+      FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate and push report
+        run: python app.py
+
+      - name: Commit updated state
+        run: |
+          if [ -z "$(git status --short -- data/history.json data/last_report.md)" ]; then
+            echo "No state changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history.json data/last_report.md
+          git commit -m "chore: update daily ai report"
+          git push
