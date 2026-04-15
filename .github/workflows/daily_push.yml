@@ -33,7 +33,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate and push report
+      - name: Generate report only
+        run: python app.py --dry-run
+
+      - name: Upload generated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report
+          path: data/last_report.md
+
+      - name: Push report to Feishu
         run: python app.py
 
       - name: Commit updated state
