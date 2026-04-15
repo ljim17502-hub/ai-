@@ -1,4 +1,6 @@
 import base64
+import hashlib
+import hmac
 import json
 import math
 import os
@@ -21,6 +23,8 @@ TIMEZONE_NAME = os.getenv("TIMEZONE", "Asia/Shanghai")
 TODAY = datetime.now(ZoneInfo(TIMEZONE_NAME)).date()
 GITHUB_TOKEN = (os.getenv("GITHUB_TOKEN") or "").strip()
 FEISHU_WEBHOOK_URL = (os.getenv("FEISHU_WEBHOOK_URL") or "").strip()
+FEISHU_BOT_SECRET = (os.getenv("FEISHU_BOT_SECRET") or "").strip()
+FEISHU_KEYWORD = (os.getenv("FEISHU_KEYWORD") or "").strip()
 MAX_RECOMMENDATIONS = int(os.getenv("MAX_RECOMMENDATIONS", "10"))
 GITHUB_SEARCH_DAYS = int(os.getenv("GITHUB_SEARCH_DAYS", "240"))
 SEARCH_PER_QUERY = 12
@@ -536,20 +540,37 @@ def chunk_text(text: str, limit: int = 2600):
     return chunks
 
 
+def build_feishu_payload(text: str):
+    content = f"{FEISHU_KEYWORD}\n{text}" if FEISHU_KEYWORD else text
+    payload = {"msg_type": "text", "content": {"text": content}}
+    if FEISHU_BOT_SECRET:
+        timestamp = str(int(time.time()))
+        string_to_sign = f"{timestamp}\n{FEISHU_BOT_SECRET}"
+        sign = base64.b64encode(
+            hmac.new(string_to_sign.encode("utf-8"), digestmod=hashlib.sha256).digest()
+        ).decode("utf-8")
+        payload["timestamp"] = timestamp
+        payload["sign"] = sign
+    return payload
+
+
 def send_to_feishu(report: str):
     if not FEISHU_WEBHOOK_URL:
         raise RuntimeError("缺少 FEISHU_WEBHOOK_URL，无法推送到飞书。")
     for chunk in chunk_text(report):
         response = requests.post(
             FEISHU_WEBHOOK_URL,
-            json={"msg_type": "text", "content": {"text": chunk}},
+            json=build_feishu_payload(chunk),
             timeout=20,
         )
         if response.status_code != 200:
             raise RuntimeError(f"飞书推送失败：{response.status_code} {response.text[:300]}")
         data = response.json()
         if data.get("code") not in (0, None):
-            raise RuntimeError(f"飞书推送失败：{data}")
+            raise RuntimeError(
+                "飞书推送失败："
+                f"code={data.get('code')} msg={data.get('msg') or data.get('message') or data}"
+            )
 
 
 def update_history(history: dict, items):
