@@ -144,16 +144,16 @@ def build_queries():
     cutoff = TODAY - timedelta(days=GITHUB_SEARCH_DAYS)
     base = f"archived:false is:public mirror:false pushed:>={cutoff.isoformat()} stars:>=10"
     return [
-        f'(\"text-to-image\" OR diffusion) {base}',
-        f'(\"image editing\" OR inpainting OR upscaling OR segmentation) {base}',
-        f'(\"video generation\" OR \"text-to-video\" OR \"image-to-video\") {base}',
-        f'(\"video editing\" OR \"frame interpolation\" OR \"video super resolution\" OR denoise) {base}',
-        f'(\"vision language model\" OR VLM OR \"multimodal understanding\") {base}',
-        f'(multimodal AND (image OR video OR vision)) {base}',
-        f'(\"digital human\" OR \"virtual human\" OR \"lip sync\" OR \"motion drive\") {base}',
-        f'(\"3D generation\" OR gaussian OR NeRF OR \"4D generation\") {base}',
-        f'((workflow OR agent OR pipeline) AND (image OR video OR multimodal)) {base}',
-        f'((training OR inference OR deployment OR acceleration) AND (diffusion OR VLM OR multimodal)) {base}',
+        f'"text-to-image" OR diffusion {base}',
+        f'"image editing" OR inpainting OR upscaling OR segmentation {base}',
+        f'"video generation" OR "text-to-video" OR "image-to-video" {base}',
+        f'"video editing" OR "frame interpolation" OR "video super resolution" OR denoise {base}',
+        f'"vision language model" OR VLM OR "multimodal understanding" {base}',
+        f'multimodal image video vision {base}',
+        f'"digital human" OR "virtual human" OR "lip sync" OR "motion drive" {base}',
+        f'"3D generation" OR gaussian OR NeRF OR "4D generation" {base}',
+        f'workflow agent pipeline image video multimodal {base}',
+        f'training inference deployment acceleration diffusion vlm multimodal {base}',
     ]
 
 
