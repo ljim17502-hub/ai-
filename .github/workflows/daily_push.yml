@@ -37,7 +37,7 @@ jobs:
         run: python app.py --dry-run
 
       - name: Upload generated report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: daily-report
           path: data/last_report.md
